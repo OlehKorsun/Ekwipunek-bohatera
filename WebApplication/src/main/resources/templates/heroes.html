@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Heroes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<!-- Obrazek -->
+<div class="text-center">
+    <img th:src="@{/images/image.jpg}" class="mt-4" alt="Obrazek Bohaterów" width="500px">
+</div>
+
+<div class="container my-4">
+    <h1 class="mb-4 text-center">Bohaterowie</h1>
+
+    <ul class="list-group mb-5">
+        <li class="list-group-item" th:each="hero : ${heroes}">
+            <strong th:text="${hero.name}"></strong>
+            — Limit wagi ekwipunku: <span th:text="${hero.inventory.weightLimit}"></span> kg
+
+            <ul class="list-group mt-2">
+                <li class="list-group-item" th:if="${#lists.isEmpty(hero.inventory.items)}">
+                    Brak przedmiotów w ekwipunku
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center"
+                    th:each="item : ${hero.inventory.items}">
+                    <span>
+                        <strong th:text="${item.name}"></strong>
+                        (<span th:text="${item.type.name}"></span>)
+                    </span>
+                    <span class="badge bg-secondary rounded-pill" th:text="${item.weight + ' kg'}"></span>
+                </li>
+            </ul>
+        </li>
+    </ul>
+<hr>
+    <!-- Formularz dodawania bohatera -->
+    <h2>Dodaj Bohatera</h2>
+    <form th:action="@{/add-hero}" th:object="${heroForm}" method="post" class="mb-5 needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="heroName" class="form-label">Nazwa</label>
+            <input type="text" th:field="*{name}" id="heroName" class="form-control" placeholder="Nazwa bohatera" required />
+            <div class="text-danger" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+        <div class="mb-3">
+            <label for="weightLimit" class="form-label">Limit wagi ekwipunku (kg)</label>
+            <input type="number" step="0.01" th:field="*{weightLimit}" id="weightLimit" class="form-control" placeholder="Np. 100.0" required />
+            <div class="text-danger" th:if="${#fields.hasErrors('weightLimit')}" th:errors="*{weightLimit}"></div>
+        </div>
+        <button type="submit" class="btn btn-success">Dodaj</button>
+    </form>
+<hr>
+    <!-- Formularz dodawania przedmiotu -->
+    <h2>Dodaj nowy przedmiot</h2>
+    <form th:action="@{/add-item}" th:object="${itemForm}" method="post" class="needs-validation" novalidate>
+        <!-- Globalne błędy -->
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+            <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+        </div>
+
+        <div class="mb-3">
+            <label for="itemName" class="form-label">Nazwa</label>
+            <input type="text" th:field="*{name}" id="itemName" class="form-control" placeholder="Nazwa przedmiotu" required />
+            <div class="text-danger" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+        <div class="mb-3">
+            <label for="itemWeight" class="form-label">Waga (kg)</label>
+            <input type="number" step="0.01" th:field="*{weight}" id="itemWeight" class="form-control" placeholder="Waga przedmiotu" required />
+            <div class="text-danger" th:if="${#fields.hasErrors('weight')}" th:errors="*{weight}"></div>
+        </div>
+        <div class="mb-3">
+            <label for="itemType" class="form-label">Typ przedmiotu</label>
+            <select th:field="*{typeId}" id="itemType" class="form-select" required>
+                <option value="" disabled selected>-- wybierz typ --</option>
+                <option th:each="type : ${types}" th:value="${type.idType}" th:text="${type.name}"></option>
+            </select>
+            <div class="text-danger" th:if="${#fields.hasErrors('typeId')}" th:errors="*{typeId}"></div>
+        </div>
+        <div class="mb-3">
+            <label for="itemHero" class="form-label">Przypisz do bohatera</label>
+            <select th:field="*{heroId}" id="itemHero" class="form-select" required>
+                <option value="" disabled selected>-- wybierz bohatera --</option>
+                <option th:each="hero : ${heroes}" th:value="${hero.idHero}" th:text="${hero.name}"></option>
+            </select>
+            <div class="text-danger" th:if="${#fields.hasErrors('heroId')}" th:errors="*{heroId}"></div>
+        </div>
+        <button type="submit" class="btn btn-primary">Dodaj przedmiot</button>
+    </form>
+
+<hr>
+    <!-- Zmiana imienia Bohatera -->
+    <h2>Zmień imię bohatera</h2>
+    <form th:action="@{/heroes/rename}" method="post" class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label for="renameHeroSelect" class="form-label">Wybierz bohatera</label>
+            <select id="renameHeroSelect" name="heroId" class="form-select" required>
+                <option value="" disabled selected>-- wybierz bohatera --</option>
+                <option th:each="hero : ${heroes}" th:value="${hero.idHero}" th:text="${hero.name}"></option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="newHeroName" class="form-label">Nowe imię</label>
+            <input type="text" id="newHeroName" name="newName" class="form-control" placeholder="Nowe imię bohatera" required />
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-warning w-100">Zmień imię</button>
+        </div>
+    </form>
+<hr>
+    <!-- Usunięcie Bohatera -->
+    <h2>Usuń Bohatera</h2>
+    <form th:action="@{/heroes/delete}" method="post" class="row g-3">
+        <div class="col-md-6">
+            <label for="deleteHeroSelect" class="form-label">Wybierz bohatera do usunięcia</label>
+            <select id="deleteHeroSelect" name="heroId" class="form-select" required>
+                <option value="" disabled selected>-- wybierz bohatera --</option>
+                <option th:each="hero : ${heroes}" th:value="${hero.idHero}" th:text="${hero.name}"></option>
+            </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+            <button type="submit" class="btn btn-danger w-100">Usuń bohatera</button>
+        </div>
+    </form>
+</div>
+
+<!-- Bootstrap JS Bundle (z Popperem) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Prosta walidacja formularza (Bootstrap) -->
+<script>
+    (() => {
+        'use strict'
+        const forms = document.querySelectorAll('.needs-validation')
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+</script>
+
+</body>
+</html>
